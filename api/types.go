@@ -1,17 +1,8 @@
 package api
 
 import (
-	"github.com/coding-boot-camp/nexus/services/tkt"
 	"time"
 )
-
-type Config struct {
-	DatabaseConfig tkt.DatabaseConfig `json:"databaseConfig"`
-	WorkerInterval int64              `json:"workerInterval"`
-	MaxErrorCount  int                `json:"maxErrorCount"`
-	LogToConsole   bool               `json:"logToConsole"`
-	LogTags        []string           `json:"logTags"`
-}
 
 type Entry struct {
 	Id         *int64     `json:"id"`

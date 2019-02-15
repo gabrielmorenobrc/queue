@@ -8,7 +8,15 @@ import (
 	"net/http"
 )
 
-var config api.Config
+type Config struct {
+	DatabaseConfig tkt.DatabaseConfig `json:"databaseConfig"`
+	WorkerInterval int                `json:"workerInterval"`
+	MaxErrorCount  int                `json:"maxErrorCount"`
+	LogToConsole   bool               `json:"logToConsole"`
+	LogTags        []string           `json:"logTags"`
+}
+
+var config Config
 
 var conf = flag.String("conf", "conf.json", "Config")
 
@@ -24,7 +32,7 @@ func main() {
 		return nil
 	})
 
-	worker := api.NewWorker(config, "harness", func(txCtx *tkt.TxCtx, entry api.Entry) {
+	worker := api.NewWorker(config.DatabaseConfig, "harness", config.MaxErrorCount, config.WorkerInterval, func(txCtx *tkt.TxCtx, entry api.Entry) {
 		value := ""
 		buffer := bytes.NewBuffer(entry.Data)
 		tkt.JsonDecode(&value, buffer)

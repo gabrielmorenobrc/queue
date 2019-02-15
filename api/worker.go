@@ -9,14 +9,16 @@ import (
 type Callback func(txCtx *tkt.TxCtx, entry Entry)
 
 type Worker struct {
-	config   Config
-	context  string
-	callback Callback
+	databaseConfig tkt.DatabaseConfig
+	interval       int
+	context        string
+	maxErrorCount  int
+	callback       Callback
 }
 
 func (o *Worker) Start() {
 
-	ticker := time.NewTicker(time.Second * time.Duration(o.config.WorkerInterval))
+	ticker := time.NewTicker(time.Second * time.Duration(o.interval))
 	go func() {
 		for range ticker.C {
 			o.processTicker()
@@ -43,7 +45,7 @@ func (o *Worker) processEntries(entries []Entry) {
 
 func (o *Worker) processEntry(entry Entry) {
 	defer o.processPanic(entry)
-	tkt.ExecuteTransactional(o.config.DatabaseConfig, func(txCtx *tkt.TxCtx, args ...interface{}) interface{} {
+	tkt.ExecuteTransactional(o.databaseConfig, func(txCtx *tkt.TxCtx, args ...interface{}) interface{} {
 		o.callback(txCtx, entry)
 		NewApi(txCtx).RegisterSuccess(*entry.Id)
 		return nil
@@ -52,7 +54,7 @@ func (o *Worker) processEntry(entry Entry) {
 
 func (o *Worker) processPanic(entry Entry) {
 	if r := recover(); r != nil {
-		tkt.ExecuteTransactional(o.config.DatabaseConfig, func(txCtx *tkt.TxCtx, args ...interface{}) interface{} {
+		tkt.ExecuteTransactional(o.databaseConfig, func(txCtx *tkt.TxCtx, args ...interface{}) interface{} {
 			NewApi(txCtx).RegisterError(*entry.Id, r)
 			return nil
 		})
@@ -60,13 +62,13 @@ func (o *Worker) processPanic(entry Entry) {
 }
 
 func (o *Worker) listPending() []Entry {
-	return tkt.ExecuteTransactional(o.config.DatabaseConfig, func(txCtx *tkt.TxCtx, args ...interface{}) interface{} {
-		return NewApi(txCtx).ListPending(o.context, o.config.MaxErrorCount)
+	return tkt.ExecuteTransactional(o.databaseConfig, func(txCtx *tkt.TxCtx, args ...interface{}) interface{} {
+		return NewApi(txCtx).ListPending(o.context, o.maxErrorCount)
 	}).([]Entry)
 }
 
-func NewWorker(config Config, context string, callback Callback) *Worker {
-	return &Worker{config: config, context: context, callback: callback}
+func NewWorker(databaseConfig tkt.DatabaseConfig, context string, maxErrorCount int, interval int, callback Callback) *Worker {
+	return &Worker{databaseConfig: databaseConfig, context: context, maxErrorCount: maxErrorCount, interval: interval, callback: callback}
 }
 
 func catchPanic() {
