@@ -1,0 +1,16 @@
+{
+  "databaseConfig": {
+    "databaseDriver": "postgres",
+    "datasourceName": "postgres://postgres:postgres@localhost/platform?sslmode=disable",
+    "maxIdleConns": 2,
+    "sequenceManager" : "inMemory"
+  },
+  "workerInterval": 5,
+  "maxErrorCount": 1,
+  "logTags": [
+    "info",
+    "error",
+    "debug"
+  ],
+  "logToConsole": true
+}
