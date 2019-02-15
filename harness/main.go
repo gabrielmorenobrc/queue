@@ -27,12 +27,13 @@ func main() {
 	tkt.ConfigLoggers("lss.log", 2000000, 10, config.LogToConsole, config.LogTags...)
 
 	tkt.ExecuteTransactional(config.DatabaseConfig, func(txCtx *tkt.TxCtx, args ...interface{}) interface{} {
-		api.NewApi(txCtx).Post("harness", "Right")
-		api.NewApi(txCtx).Post("harness", "Wrong")
+		api := queue.NewApi(txCtx)
+		api.Post("harness", "Right")
+		api.Post("harness", "Wrong")
 		return nil
 	})
 
-	worker := api.NewWorker(config.DatabaseConfig, "harness", config.MaxErrorCount, config.WorkerInterval, func(txCtx *tkt.TxCtx, entry api.Entry) {
+	worker := queue.NewWorker(config.DatabaseConfig, "harness", config.MaxErrorCount, config.WorkerInterval, func(txCtx *tkt.TxCtx, entry queue.Entry) {
 		value := ""
 		buffer := bytes.NewBuffer(entry.Data)
 		tkt.JsonDecode(&value, buffer)

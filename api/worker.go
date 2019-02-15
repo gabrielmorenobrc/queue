@@ -1,4 +1,4 @@
-package api
+package queue
 
 import (
 	"github.com/coding-boot-camp/nexus/services/tkt"
